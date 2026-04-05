@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rubrics Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 Rubrics System Test</h1>
+    
+    <h2>Test Backend Connection</h2>
+    <button onclick="testAPI()">Test API Connection</button>
+    <button onclick="createTestRubric()">Create Test Rubric</button>
+    
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/events/12/rubrics');
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.innerHTML = `<div class="success">✅ SUCCESS! Backend is working!</div>
+                                       <pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    result.innerHTML = `<div class="error">❌ API Error: ${data.message}</div>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Connection Error: ${error.message}</div>`;
+            }
+        }
+
+        async function createTestRubric() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'Creating test rubric...';
+            
+            const testData = {
+                event_id: 12,
+                name: "Test Rubric",
+                description: "This is a test rubric",
+                total_points: 100,
+                criteria: [
+                    {
+                        name: "Quality",
+                        description: "Overall quality",
+                        max_score: 50,
+                        weightage: 50
+                    },
+                    {
+                        name: "Presentation",
+                        description: "Presentation skills",
+                        max_score: 50,
+                        weightage: 50
+                    }
+                ]
+            };
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/rubrics', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.innerHTML = `<div class="success">✅ SUCCESS! Rubric created!</div>
+                                       <pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    result.innerHTML = `<div class="error">❌ Error: ${data.message}</div>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
+```
+

@@ -1,0 +1,682 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Scoreboard - Event Evaluation</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@300;400;500;600;700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease;
+        }
+        
+        .header h1 {
+            font-family: 'Space Mono', monospace;
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .controls {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            animation: fadeIn 1s ease;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 2fr 2fr 1fr;
+            gap: 1rem;
+            align-items: end;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        select, button {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-family: 'Work Sans', sans-serif;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        select:focus, button:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.2);
+        }
+        
+        select option {
+            background: #1e293b;
+            color: white;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            animation: fadeInUp 0.8s ease;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-family: 'Space Mono', monospace;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .chart-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            animation: fadeIn 1.2s ease;
+        }
+        
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .leaderboard {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            animation: fadeIn 1.5s ease;
+        }
+        
+        .leaderboard-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .leaderboard-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: grid;
+            grid-template-columns: 60px 1fr 150px;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+            animation: slideInRight 0.5s ease;
+        }
+        
+        .leaderboard-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(10px);
+        }
+        
+        .rank {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Space Mono', monospace;
+        }
+        
+        .rank-1 { background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); color: #000; }
+        .rank-2 { background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%); color: #000; }
+        .rank-3 { background: linear-gradient(135deg, #cd7f32 0%, #ff9c5d 100%); color: #000; }
+        .rank-other { background: rgba(255, 255, 255, 0.1); }
+        
+        .participant-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .participant-info p {
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+        
+        .score-display {
+            text-align: right;
+        }
+        
+        .score-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'Space Mono', monospace;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .score-label {
+            font-size: 0.8rem;
+            opacity: 0.6;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            opacity: 0.5;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @media (max-width: 768px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+            .leaderboard-item {
+                grid-template-columns: 50px 1fr;
+            }
+            .score-display {
+                grid-column: 2;
+                text-align: left;
+                margin-top: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏆 Live Scoreboard</h1>
+            <p>Real-time event evaluation results</p>
+        </div>
+        
+        <div class="controls">
+            <div class="controls-grid">
+                <div>
+                    <label for="eventSelect">Select Event</label>
+                    <select id="eventSelect" onchange="loadRubrics()">
+                        <option value="">-- Select Event --</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="rubricSelect">Select Rubric</label>
+                    <select id="rubricSelect" onchange="loadScoreboard()">
+                        <option value="">-- Select Rubric --</option>
+                    </select>
+                </div>
+                <div>
+                    <label>&nbsp;</label>
+                    <button onclick="loadScoreboard()">🔄 Refresh</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats-grid" id="statsGrid" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-value" id="totalParticipants">0</div>
+                <div class="stat-label">Total Participants</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="averageScore">0</div>
+                <div class="stat-label">Average Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="highestScore">0</div>
+                <div class="stat-label">Highest Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="lowestScore">0</div>
+                <div class="stat-label">Lowest Score</div>
+            </div>
+        </div>
+        
+        <div class="charts-container" id="chartsContainer" style="display: none;">
+            <div class="chart-card">
+                <h3 class="chart-title">Performance Radar</h3>
+                <div id="radarChart"></div>
+            </div>
+            <div class="chart-card">
+                <h3 class="chart-title">Score Distribution</h3>
+                <div id="barChart"></div>
+            </div>
+        </div>
+        
+        <div class="leaderboard">
+            <h2 class="leaderboard-title">🏅 Rankings</h2>
+            <div id="leaderboardContent">
+                <div class="empty-state">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">📊</div>
+                    <h3>No Scores Yet</h3>
+                    <p>Select an event and rubric to view the leaderboard</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentEventId = null;
+        let currentRubricId = null;
+        let scoreboardData = null;
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            loadEvents();
+        });
+        
+        // ========================================
+        // 🔧 FIXED: Load Events from API
+        // ========================================
+        async function loadEvents() {
+            try {
+                console.log('📡 Loading events for scoreboard...');
+                
+                const token = localStorage.getItem('token');
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch('/api/events', { headers });
+                
+                console.log('📊 Events API response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to load events: ${response.status}`);
+                }
+                
+                // ✅ FIX: API returns array directly
+                const events = await response.json();
+                
+                console.log('✅ Events loaded:', events);
+                
+                const select = document.getElementById('eventSelect');
+                select.innerHTML = '<option value="">-- Select Event --</option>';
+                
+                if (Array.isArray(events) && events.length > 0) {
+                    events.forEach(event => {
+                        const option = document.createElement('option');
+                        option.value = event.id;
+                        
+                        const dateStr = event.eventDate ? 
+                            new Date(event.eventDate).toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'short', 
+                                day: 'numeric' 
+                            }) : '';
+                        
+                        option.textContent = `${event.title}${dateStr ? ' - ' + dateStr : ''}`;
+                        select.appendChild(option);
+                    });
+                    
+                    console.log(`✅ Loaded ${events.length} events`);
+                    
+                    // Auto-select event if coming from URL
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const eventId = urlParams.get('event_id');
+                    if (eventId) {
+                        select.value = eventId;
+                        loadRubrics();
+                    }
+                } else {
+                    console.warn('⚠️ No events found');
+                }
+            } catch (error) {
+                console.error('❌ Error loading events:', error);
+                alert('Failed to load events. Please refresh the page.');
+            }
+        }
+        
+        async function loadRubrics() {
+            const eventId = document.getElementById('eventSelect').value;
+            if (!eventId) return;
+            
+            currentEventId = eventId;
+            
+            try {
+                const response = await fetch(`/api/events/${eventId}/rubrics`);
+                const data = await response.json();
+                
+                const select = document.getElementById('rubricSelect');
+                select.innerHTML = '<option value="">-- Select Rubric --</option>';
+                
+                if (data.success && data.rubrics && data.rubrics.length > 0) {
+                    data.rubrics.forEach(rubric => {
+                        const option = document.createElement('option');
+                        option.value = rubric.id;
+                        option.textContent = rubric.name;
+                        select.appendChild(option);
+                    });
+                    
+                    // Auto-select first rubric
+                    select.value = data.rubrics[0].id;
+                    loadScoreboard();
+                }
+            } catch (error) {
+                console.error('Error loading rubrics:', error);
+            }
+        }
+        
+        async function loadScoreboard() {
+            const eventId = document.getElementById('eventSelect').value;
+            const rubricId = document.getElementById('rubricSelect').value;
+            
+            if (!eventId || !rubricId) return;
+            
+            currentRubricId = rubricId;
+            
+            try {
+                const response = await fetch(`/api/events/${eventId}/rubrics/${rubricId}/scoreboard`);
+                const data = await response.json();
+                
+                if (data.success && data.scoreboard && data.scoreboard.length > 0) {
+                    scoreboardData = data.scoreboard;
+                    displayScoreboard(data.scoreboard);
+                    displayStatistics(data.scoreboard);
+                    displayCharts(data.scoreboard);
+                } else {
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('Error loading scoreboard:', error);
+                showEmptyState();
+            }
+        }
+        
+        function displayScoreboard(scoreboard) {
+            const container = document.getElementById('leaderboardContent');
+            container.innerHTML = '';
+            
+            scoreboard.forEach((participant, index) => {
+                const rankClass = participant.rank <= 3 ? `rank-${participant.rank}` : 'rank-other';
+                const medal = participant.rank === 1 ? '🥇' : participant.rank === 2 ? '🥈' : participant.rank === 3 ? '🥉' : participant.rank;
+                
+                const item = document.createElement('div');
+                item.className = 'leaderboard-item';
+                item.style.animationDelay = `${index * 0.1}s`;
+                item.innerHTML = `
+                    <div class="rank ${rankClass}">${medal}</div>
+                    <div class="participant-info">
+                        <h3>${participant.participant_name}</h3>
+                        <p>${participant.participant_email || 'No email provided'}</p>
+                    </div>
+                    <div class="score-display">
+                        <div class="score-value">${parseFloat(participant.weighted_score).toFixed(2)}</div>
+                        <div class="score-label">Weighted Score</div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+        
+        function displayStatistics(scoreboard) {
+            const scores = scoreboard.map(p => parseFloat(p.weighted_score));
+            
+            document.getElementById('totalParticipants').textContent = scoreboard.length;
+            document.getElementById('averageScore').textContent = (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2);
+            document.getElementById('highestScore').textContent = Math.max(...scores).toFixed(2);
+            document.getElementById('lowestScore').textContent = Math.min(...scores).toFixed(2);
+            
+            document.getElementById('statsGrid').style.display = 'grid';
+        }
+        
+        function displayCharts(scoreboard) {
+            displayRadarChart(scoreboard[0]); // Top performer
+            displayBarChart(scoreboard);
+            document.getElementById('chartsContainer').style.display = 'grid';
+        }
+        
+        function displayRadarChart(topPerformer) {
+            const container = document.getElementById('radarChart');
+            container.innerHTML = '';
+            
+            if (!topPerformer || !topPerformer.criteria_scores) return;
+            
+            const width = 400;
+            const height = 400;
+            const radius = Math.min(width, height) / 2 - 60;
+            
+            const svg = d3.select('#radarChart')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height)
+                .append('g')
+                .attr('transform', `translate(${width/2}, ${height/2})`);
+            
+            const criteria = topPerformer.criteria_scores;
+            const angleSlice = Math.PI * 2 / criteria.length;
+            
+            // Draw background circles
+            const levels = 5;
+            for (let i = 1; i <= levels; i++) {
+                svg.append('circle')
+                    .attr('r', radius / levels * i)
+                    .style('fill', 'none')
+                    .style('stroke', 'rgba(255,255,255,0.1)');
+            }
+            
+            // Draw axes
+            criteria.forEach((c, i) => {
+                const angle = angleSlice * i - Math.PI / 2;
+                const x = radius * Math.cos(angle);
+                const y = radius * Math.sin(angle);
+                
+                svg.append('line')
+                    .attr('x1', 0)
+                    .attr('y1', 0)
+                    .attr('x2', x)
+                    .attr('y2', y)
+                    .style('stroke', 'rgba(255,255,255,0.2)');
+                
+                svg.append('text')
+                    .attr('x', x * 1.2)
+                    .attr('y', y * 1.2)
+                    .attr('text-anchor', 'middle')
+                    .style('fill', 'white')
+                    .style('font-size', '12px')
+                    .text(c.criterion_name);
+            });
+            
+            // Draw data
+            const points = criteria.map((c, i) => {
+                const angle = angleSlice * i - Math.PI / 2;
+                const value = parseFloat(c.avg_score) / parseFloat(c.max_score);
+                const x = radius * value * Math.cos(angle);
+                const y = radius * value * Math.sin(angle);
+                return [x, y];
+            });
+            
+            const lineGenerator = d3.line();
+            
+            svg.append('path')
+                .datum([...points, points[0]])
+                .attr('d', lineGenerator)
+                .style('fill', 'rgba(102, 126, 234, 0.3)')
+                .style('stroke', '#667eea')
+                .style('stroke-width', 2);
+            
+            points.forEach(point => {
+                svg.append('circle')
+                    .attr('cx', point[0])
+                    .attr('cy', point[1])
+                    .attr('r', 4)
+                    .style('fill', '#667eea');
+            });
+        }
+        
+        function displayBarChart(scoreboard) {
+            const container = document.getElementById('barChart');
+            container.innerHTML = '';
+            
+            const margin = { top: 20, right: 20, bottom: 60, left: 60 };
+            const width = 500 - margin.left - margin.right;
+            const height = 400 - margin.top - margin.bottom;
+            
+            const svg = d3.select('#barChart')
+                .append('svg')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom)
+                .append('g')
+                .attr('transform', `translate(${margin.left}, ${margin.top})`);
+            
+            const data = scoreboard.slice(0, 10); // Top 10
+            
+            const x = d3.scaleBand()
+                .domain(data.map((d, i) => i + 1))
+                .range([0, width])
+                .padding(0.2);
+            
+            const y = d3.scaleLinear()
+                .domain([0, d3.max(data, d => parseFloat(d.weighted_score))])
+                .range([height, 0]);
+            
+            svg.selectAll('rect')
+                .data(data)
+                .enter()
+                .append('rect')
+                .attr('x', (d, i) => x(i + 1))
+                .attr('y', d => y(parseFloat(d.weighted_score)))
+                .attr('width', x.bandwidth())
+                .attr('height', d => height - y(parseFloat(d.weighted_score)))
+                .attr('fill', (d, i) => i < 3 ? '#ffd700' : '#667eea')
+                .attr('opacity', 0.8);
+            
+            svg.append('g')
+                .attr('transform', `translate(0, ${height})`)
+                .call(d3.axisBottom(x))
+                .style('color', 'white');
+            
+            svg.append('g')
+                .call(d3.axisLeft(y))
+                .style('color', 'white');
+            
+            svg.append('text')
+                .attr('x', width / 2)
+                .attr('y', height + 40)
+                .attr('text-anchor', 'middle')
+                .style('fill', 'white')
+                .text('Rank');
+            
+            svg.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('x', -height / 2)
+                .attr('y', -40)
+                .attr('text-anchor', 'middle')
+                .style('fill', 'white')
+                .text('Score');
+        }
+        
+        function showEmptyState() {
+            document.getElementById('statsGrid').style.display = 'none';
+            document.getElementById('chartsContainer').style.display = 'none';
+            document.getElementById('leaderboardContent').innerHTML = `
+                <div class="empty-state">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">📊</div>
+                    <h3>No Scores Available</h3>
+                    <p>Scores will appear here once judges complete their evaluations</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
+ 

@@ -1,0 +1,472 @@
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rubric Builder - Event Management</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@300;400;500;600;700&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #2563eb; --primary-dark: #1e40af; --secondary: #10b981;
+            --danger: #ef4444; --warning: #f59e0b; --dark: #1e293b;
+            --gray: #64748b; --light-gray: #f1f5f9; --white: #ffffff; --border: #e2e8f0;
+        }
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; padding: 2rem;
+        }
+        .container {
+            max-width: 1200px; margin: 0 auto; background: var(--white);
+            border-radius: 20px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; padding: 2rem; position: relative; overflow: hidden;
+        }
+        .header::before {
+            content: ''; position: absolute; top: -50%; right: -10%; width: 400px; height: 400px;
+            background: rgba(255, 255, 255, 0.1); border-radius: 50%;
+        }
+        .header h1 {
+            font-family: 'Space Mono', monospace; font-size: 2rem;
+            margin-bottom: 0.5rem; position: relative; z-index: 1;
+        }
+        .header p { opacity: 0.9; position: relative; z-index: 1; }
+        .content { padding: 2rem; }
+        .form-section {
+            margin-bottom: 2rem; padding: 1.5rem; background: var(--light-gray);
+            border-radius: 12px; border-left: 4px solid var(--primary);
+        }
+        .form-section h3 {
+            color: var(--dark); margin-bottom: 1rem; font-size: 1.25rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .form-section h3::before { content: '●'; color: var(--primary); font-size: 1.5rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        label {
+            display: block; margin-bottom: 0.5rem; color: var(--dark);
+            font-weight: 500; font-size: 0.95rem;
+        }
+        input[type="text"], input[type="number"], textarea, select {
+            width: 100%; padding: 0.75rem 1rem; border: 2px solid var(--border);
+            border-radius: 8px; font-family: 'Work Sans', sans-serif; font-size: 0.95rem;
+            transition: all 0.3s ease; background: white;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none; border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        textarea { resize: vertical; min-height: 100px; }
+        .criteria-list { margin-top: 1rem; }
+        .criterion-item {
+            background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;
+            border: 2px solid var(--border); position: relative; transition: all 0.3s ease;
+        }
+        .criterion-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); transform: translateY(-2px);
+        }
+        .criterion-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;
+        }
+        .criterion-number {
+            background: var(--primary); color: white; width: 32px; height: 32px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-family: 'Space Mono', monospace; font-weight: bold;
+        }
+        .criterion-fields {
+            display: grid; grid-template-columns: 1fr 150px 150px; gap: 1rem; margin-bottom: 1rem;
+        }
+        .remove-btn {
+            background: var(--danger); color: white; border: none; padding: 0.5rem 1rem;
+            border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s ease;
+        }
+        .remove-btn:hover { background: #dc2626; transform: scale(1.05); }
+        .add-criterion-btn {
+            background: var(--secondary); color: white; border: none; padding: 0.75rem 1.5rem;
+            border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600;
+            display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s ease; margin-top: 1rem;
+        }
+        .add-criterion-btn:hover {
+            background: #059669; transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .add-criterion-btn::before { content: '+'; font-size: 1.5rem; font-weight: bold; }
+        .total-score-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; padding: 1.5rem; border-radius: 12px; text-align: center; margin-top: 1rem;
+        }
+        .total-score-display h4 { font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem; }
+        .total-score-display .score {
+            font-family: 'Space Mono', monospace; font-size: 3rem; font-weight: bold;
+        }
+        .warning-text {
+            color: var(--warning); font-size: 0.85rem; margin-top: 0.5rem; display: none;
+        }
+        .warning-text.show { display: block; }
+        .button-group {
+            display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;
+            padding-top: 2rem; border-top: 2px solid var(--border);
+        }
+        .btn {
+            padding: 0.75rem 2rem; border: none; border-radius: 8px; font-size: 1rem;
+            font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-family: 'Work Sans', sans-serif;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover {
+            background: var(--primary-dark); transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        .btn-secondary { background: var(--gray); color: white; }
+        .btn-secondary:hover { background: #475569; }
+        .success-message {
+            background: var(--secondary); color: white; padding: 1rem; border-radius: 8px;
+            margin-bottom: 1rem; display: none; animation: slideDown 0.3s ease;
+        }
+        .success-message.show { display: block; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .error-message {
+            background: var(--danger); color: white; padding: 1rem;
+            border-radius: 8px; margin-bottom: 1rem; display: none;
+        }
+        .error-message.show { display: block; }
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            .criterion-fields { grid-template-columns: 1fr; }
+            .button-group { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Rubric Builder</h1>
+            <p>Create evaluation criteria for your event</p>
+        </div>
+        <div class="content">
+            <div id="successMessage" class="success-message"></div>
+            <div id="errorMessage" class="error-message"></div>
+            <form id="rubricForm">
+                <div class="form-section">
+                    <h3>Basic Information</h3>
+                    <div class="form-group">
+                        <label for="eventSelect">Select Event *</label>
+                        <select id="eventSelect" required>
+                            <option value="">-- Select Event --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="rubricName">Rubric Name *</label>
+                        <input type="text" id="rubricName" required placeholder="e.g., Coding Competition Rubric">
+                    </div>
+                    <div class="form-group">
+                        <label for="rubricDescription">Description</label>
+                        <textarea id="rubricDescription" placeholder="Describe the purpose of this rubric"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="totalPoints">Total Points *</label>
+                        <input type="number" id="totalPoints" value="100" required min="1" readonly>
+                        <small style="color: var(--gray); display: block; margin-top: 0.5rem;">
+                            Total will be calculated automatically based on criteria max scores
+                        </small>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <h3>Evaluation Criteria</h3>
+                    <div class="criteria-list" id="criteriaList"></div>
+                    <button type="button" class="add-criterion-btn" onclick="addCriterion()">Add Criterion</button>
+                    <div class="total-score-display">
+                        <h4>TOTAL WEIGHTAGE</h4>
+                        <div class="score" id="totalWeightage">0%</div>
+                        <div class="warning-text" id="weightageWarning">⚠️ Total weightage must equal 100%</div>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button type="button" class="btn btn-secondary" onclick="saveDraft()">Save as Draft</button>
+                    <button type="submit" class="btn btn-primary">Create Rubric</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        let criteriaCount = 0;
+        
+        window.addEventListener('DOMContentLoaded', () => { 
+            console.log('🎯 Rubric Builder loaded');
+            loadEvents(); 
+            addCriterion(); 
+        });
+        
+        // ========================================
+        // 🔧 FIXED: Load Events from API
+        // ========================================
+        async function loadEvents() {
+            try {
+                console.log('📡 Loading events from API...');
+                
+                // Get authentication token
+                const token = localStorage.getItem('token');
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                    console.log('✅ Auth token found');
+                } else {
+                    console.warn('⚠️ No auth token found');
+                }
+                
+                const response = await fetch('/api/events', { headers });
+                
+                console.log('📊 API Response Status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                // ✅ FIX: Your API returns array directly, not { events: [...] }
+                const events = await response.json();
+                
+                console.log('✅ Events loaded:', events);
+                console.log('📦 Total events:', Array.isArray(events) ? events.length : 0);
+                
+                const select = document.getElementById('eventSelect');
+                
+                if (!select) {
+                    console.error('❌ Event select element not found!');
+                    return;
+                }
+                
+                // Clear existing options
+                select.innerHTML = '<option value="">-- Select Event --</option>';
+                
+                if (Array.isArray(events) && events.length > 0) {
+                    events.forEach((event, index) => {
+                        const option = document.createElement('option');
+                        option.value = event.id;
+                        
+                        // Format date if available
+                        const dateStr = event.eventDate ? 
+                            new Date(event.eventDate).toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'short', 
+                                day: 'numeric' 
+                            }) : '';
+                        
+                        option.textContent = `${event.title}${dateStr ? ' - ' + dateStr : ''}`;
+                        select.appendChild(option);
+                        
+                        console.log(`  ${index + 1}. ${event.title} (ID: ${event.id})`);
+                    });
+                    
+                    console.log(`✅ Successfully loaded ${events.length} events into dropdown`);
+                    
+                    // Auto-select event if coming from event page
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const eventId = urlParams.get('event_id');
+                    if (eventId) {
+                        select.value = eventId;
+                        console.log('🎯 Pre-selected event ID:', eventId);
+                    }
+                } else {
+                    console.warn('⚠️ No events found in response');
+                    select.innerHTML += '<option value="" disabled>No events available</option>';
+                    showError('No events found. Please create an event first.');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error loading events:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    stack: error.stack
+                });
+                
+                const select = document.getElementById('eventSelect');
+                if (select) {
+                    select.innerHTML = '<option value="">Error loading events - please refresh</option>';
+                }
+                
+                showError('Failed to load events. Please check console for details.');
+            }
+        }
+        
+        function addCriterion() {
+            criteriaCount++;
+            const criteriaList = document.getElementById('criteriaList');
+            const criterionDiv = document.createElement('div');
+            criterionDiv.className = 'criterion-item';
+            criterionDiv.id = `criterion-${criteriaCount}`;
+            criterionDiv.innerHTML = `
+                <div class="criterion-header">
+                    <div class="criterion-number">${criteriaCount}</div>
+                    <button type="button" class="remove-btn" onclick="removeCriterion(${criteriaCount})">Remove</button>
+                </div>
+                <div class="criterion-fields">
+                    <div class="form-group">
+                        <label>Criterion Name *</label>
+                        <input type="text" class="criterion-name" required placeholder="e.g., Code Quality">
+                    </div>
+                    <div class="form-group">
+                        <label>Max Score *</label>
+                        <input type="number" class="criterion-score" required min="1" value="25" onchange="updateTotals()">
+                    </div>
+                    <div class="form-group">
+                        <label>Weightage (%) *</label>
+                        <input type="number" class="criterion-weightage" required min="0" max="100" value="25" step="0.01" onchange="updateTotals()">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea class="criterion-description" placeholder="Describe what this criterion evaluates"></textarea>
+                </div>
+            `;
+            criteriaList.appendChild(criterionDiv);
+            updateTotals();
+        }
+        
+        function removeCriterion(id) {
+            const criterion = document.getElementById(`criterion-${id}`);
+            if (criterion) { 
+                criterion.remove(); 
+                updateTotals(); 
+                renumberCriteria(); 
+            }
+        }
+        
+        function renumberCriteria() {
+            const criteria = document.querySelectorAll('.criterion-item');
+            criteria.forEach((item, index) => {
+                const number = item.querySelector('.criterion-number');
+                if (number) number.textContent = index + 1;
+            });
+        }
+        
+        function updateTotals() {
+            const scores = document.querySelectorAll('.criterion-score');
+            const weightages = document.querySelectorAll('.criterion-weightage');
+            let totalScore = 0, totalWeightage = 0;
+            
+            scores.forEach(input => { 
+                totalScore += parseFloat(input.value) || 0; 
+            });
+            
+            weightages.forEach(input => { 
+                totalWeightage += parseFloat(input.value) || 0; 
+            });
+            
+            document.getElementById('totalPoints').value = totalScore;
+            document.getElementById('totalWeightage').textContent = totalWeightage.toFixed(2) + '%';
+            
+            const warning = document.getElementById('weightageWarning');
+            if (Math.abs(totalWeightage - 100) > 0.01) { 
+                warning.classList.add('show'); 
+            } else { 
+                warning.classList.remove('show'); 
+            }
+        }
+        
+        async function saveDraft() {
+            const formData = collectFormData();
+            formData.status = 'draft';
+            await submitRubric(formData);
+        }
+        
+        document.getElementById('rubricForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const totalWeightage = parseFloat(document.getElementById('totalWeightage').textContent);
+            if (Math.abs(totalWeightage - 100) > 0.01) {
+                showError('Total weightage must equal 100%');
+                return;
+            }
+            
+            const formData = collectFormData();
+            formData.status = 'active';
+            await submitRubric(formData);
+        });
+        
+        function collectFormData() {
+            const criteria = [];
+            const criteriaItems = document.querySelectorAll('.criterion-item');
+            
+            criteriaItems.forEach((item, index) => {
+                criteria.push({
+                    name: item.querySelector('.criterion-name').value,
+                    description: item.querySelector('.criterion-description').value,
+                    max_score: parseFloat(item.querySelector('.criterion-score').value),
+                    weightage: parseFloat(item.querySelector('.criterion-weightage').value),
+                    sort_order: index + 1
+                });
+            });
+            
+            return {
+                event_id: document.getElementById('eventSelect').value,
+                name: document.getElementById('rubricName').value,
+                description: document.getElementById('rubricDescription').value,
+                total_points: parseFloat(document.getElementById('totalPoints').value),
+                criteria: criteria
+            };
+        }
+        
+        async function submitRubric(data) {
+            try {
+                console.log('📤 Submitting rubric:', data);
+                
+                const token = localStorage.getItem('token');
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch('/api/rubrics', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                console.log('📥 Server response:', result);
+                
+                if (result.success) {
+                    showSuccess('✅ Rubric created successfully!');
+                    setTimeout(() => { 
+                        window.location.href = 'pages/events.html';
+                    }, 2000);
+                } else {
+                    showError(result.message || 'Failed to create rubric');
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                showError('An error occurred while creating the rubric');
+            }
+        }
+        
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.classList.add('show');
+            setTimeout(() => { 
+                successDiv.classList.remove('show'); 
+            }, 5000);
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+            setTimeout(() => { 
+                errorDiv.classList.remove('show'); 
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
+ 

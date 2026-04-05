@@ -1,0 +1,626 @@
+   <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Management</title>
+    
+    <!-- Auth Check -->
+    <script>
+        (function() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('⚠️ Please login to access this page');
+                window.location.href = '../login.html';
+            }
+        })();
+    </script>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-2 d-md-block bg-primary sidebar">
+                <div class="position-sticky pt-3">
+                    <h4 class="text-white text-center mb-4">
+                        <i class="fas fa-calendar-alt"></i> Event Management
+                    </h4>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="dashboard.html">
+                                <i class="fas fa-home"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="events.html">
+                                <i class="fas fa-calendar"></i> Events
+                            </a>
+                        </li>
+                        <li class="nav-item" id="myEventsLink" style="display: none;">
+                            <a class="nav-link text-white" href="my-events.html">
+                                <i class="fas fa-star"></i> My Events
+                            </a>
+                        </li>
+                        <li class="nav-item" id="paymentsLink" style="display: none;">
+                            <a class="nav-link text-white" href="payments.html">
+                                <i class="fas fa-credit-card"></i> Payments
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="clubs.html">
+                                <i class="fas fa-users"></i> Clubs
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="calendar.html">
+                                <i class="fas fa-calendar-alt"></i> Calendar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white active" href="attendance.html">
+                                <i class="fas fa-user-check"></i> Attendance
+                            </a>
+                        </li>
+                        <li class="nav-item" id="reportsLink">
+                            <a class="nav-link text-white" href="reports.html">
+                                <i class="fas fa-chart-bar"></i> Reports
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="col-md-10 ms-sm-auto px-md-4" style="background-color: #f8f9fa; min-height: 100vh;">
+                <!-- Header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <div>
+                        <h1 class="h2">Attendance Management</h1>
+                        <p class="text-muted">Track and manage event attendance</p>
+                    </div>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <span class="navbar-text text-dark me-3" id="userDisplay">
+                            <i class="fas fa-user"></i> <span id="userName">Loading...</span> (<span id="userRole">-</span>)
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Manual Attendance Entry - ADMIN ONLY -->
+                <div class="card mb-4" id="manualAttendanceSection" style="display: none;">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-user-plus"></i> Manual Attendance Entry (ADMIN Only)</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="manualAttendanceForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Select Event *</label>
+                                    <select class="form-select" id="eventSelect" required onchange="loadParticipantsForEvent()">
+                                        <option value="">-- Select Event --</option>
+                                    </select>
+                                    <small class="text-muted" id="eventSelectHelp">Select an event to load participants</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Select Participant *</label>
+                                    <select class="form-select" id="participantSelect" required onchange="fillParticipantDetails()">
+                                        <option value="">-- Select Event First --</option>
+                                    </select>
+                                    <small class="text-muted" id="participantSelectHelp">
+                                        <i class="fas fa-info-circle"></i> Loading...
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Student Name *</label>
+                                    <input type="text" class="form-control" id="studentName" required readonly style="background-color: #e9ecef;">
+                                    <small class="text-muted">Auto-filled from participant selection</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Student Email *</label>
+                                    <input type="email" class="form-control" id="studentEmail" required readonly style="background-color: #e9ecef;">
+                                    <small class="text-muted">Auto-filled from participant selection</small>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Roll Number</label>
+                                    <input type="text" class="form-control" id="rollNumber" readonly style="background-color: #e9ecef;">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Department</label>
+                                    <input type="text" class="form-control" id="department" readonly style="background-color: #e9ecef;">
+                                </div>
+                            </div>
+                            
+                            <button type="button" class="btn btn-success" onclick="markManualAttendance()">
+                                <i class="fas fa-check"></i> Mark Attendance
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- View Attendance -->
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-list"></i> Attendance Records</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Filter by Event</label>
+                                <select class="form-select" id="filterEventSelect" onchange="filterAttendance()">
+                                    <option value="">-- All Events --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Search by Name/Email</label>
+                                <input type="text" class="form-control" id="searchAttendance" 
+                                       placeholder="Search..." onkeyup="filterAttendance()">
+                            </div>
+                        </div>
+                        
+                        <div id="attendanceList">
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- EMBEDDED JAVASCRIPT -->
+    <script>
+        const API_URL = 'http://localhost:8080/api';
+        let allAttendanceRecords = [];
+        let currentParticipants = [];
+        
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎯 Attendance page loaded');
+            
+            // Get user info from token
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    const userName = payload.sub || payload.email || 'User';
+                    const userRole = payload.role || 'UNKNOWN';
+                    
+                    document.getElementById('userName').textContent = userName;
+                    document.getElementById('userRole').textContent = userRole;
+                    
+                    console.log('👤 User:', userName, '| Role:', userRole);
+                    
+                    // Show manual attendance section for ADMIN only
+                    if (userRole === 'ADMIN') {
+                        document.getElementById('manualAttendanceSection').style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error('❌ Error parsing token:', error);
+                }
+            }
+            
+            // Load initial data
+            loadEvents();
+            loadAttendanceRecords();
+        });
+        
+        // ============================================
+        // LOAD EVENTS
+        // ============================================
+        async function loadEvents() {
+            try {
+                console.log('📡 Loading events...');
+                
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/events`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const events = await response.json();
+                console.log('✅ Events loaded:', events.length);
+                
+                // Populate both dropdowns
+                const eventSelect = document.getElementById('eventSelect');
+                const filterEventSelect = document.getElementById('filterEventSelect');
+                
+                eventSelect.innerHTML = '<option value="">-- Select Event --</option>';
+                filterEventSelect.innerHTML = '<option value="">-- All Events --</option>';
+                
+                events.forEach(event => {
+                    const option1 = document.createElement('option');
+                    option1.value = event.id;
+                    option1.textContent = `${event.title} (${formatDate(event.eventDate)})`;
+                    eventSelect.appendChild(option1);
+                    
+                    const option2 = document.createElement('option');
+                    option2.value = event.id;
+                    option2.textContent = `${event.title} (${formatDate(event.eventDate)})`;
+                    filterEventSelect.appendChild(option2);
+                });
+                
+                console.log('✅ Event dropdowns populated');
+                
+            } catch (error) {
+                console.error('❌ Error loading events:', error);
+                showError('Failed to load events. Please refresh the page.');
+            }
+        }
+        
+        // ============================================
+        // LOAD PARTICIPANTS FOR SELECTED EVENT
+        // ============================================
+        async function loadParticipantsForEvent() {
+            const eventId = document.getElementById('eventSelect').value;
+            const participantSelect = document.getElementById('participantSelect');
+            const helpText = document.getElementById('participantSelectHelp');
+            
+            // Reset participant selection
+            participantSelect.innerHTML = '<option value="">-- Loading... --</option>';
+            document.getElementById('studentName').value = '';
+            document.getElementById('studentEmail').value = '';
+            document.getElementById('rollNumber').value = '';
+            document.getElementById('department').value = '';
+            
+            if (!eventId) {
+                participantSelect.innerHTML = '<option value="">-- Select Event First --</option>';
+                helpText.innerHTML = '<i class="fas fa-info-circle"></i> Select an event first';
+                return;
+            }
+            
+            try {
+                console.log('📡 Loading participants for event:', eventId);
+                
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/attendance/event/${eventId}/participants`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('✅ Participants data:', data);
+                
+                const participants = data.participants || data || [];
+                currentParticipants = participants;
+                
+                console.log(`✅ Found ${participants.length} participants`);
+                
+                participantSelect.innerHTML = '<option value="">-- Select Participant --</option>';
+                
+                if (participants.length === 0) {
+                    participantSelect.innerHTML = '<option value="">-- No participants found --</option>';
+                    helpText.innerHTML = '<i class="fas fa-exclamation-triangle text-warning"></i> No participants registered for this event';
+                } else {
+                    participants.forEach((participant, index) => {
+                        const option = document.createElement('option');
+                        option.value = index; // Use index to reference the participant
+                        option.textContent = `${participant.name} (${participant.email})`;
+                        participantSelect.appendChild(option);
+                    });
+                    
+                    helpText.innerHTML = `<i class="fas fa-check-circle text-success"></i> ${participants.length} participant(s) found`;
+                }
+                
+            } catch (error) {
+                console.error('❌ Error loading participants:', error);
+                participantSelect.innerHTML = '<option value="">-- Error loading participants --</option>';
+                helpText.innerHTML = `<i class="fas fa-exclamation-circle text-danger"></i> Failed to load participants`;
+            }
+        }
+        
+        // ============================================
+        // FILL PARTICIPANT DETAILS WHEN SELECTED
+        // ============================================
+        function fillParticipantDetails() {
+            const participantIndex = document.getElementById('participantSelect').value;
+            
+            if (!participantIndex || participantIndex === '') {
+                document.getElementById('studentName').value = '';
+                document.getElementById('studentEmail').value = '';
+                document.getElementById('rollNumber').value = '';
+                document.getElementById('department').value = '';
+                return;
+            }
+            
+            const participant = currentParticipants[participantIndex];
+            
+            if (participant) {
+                console.log('✅ Selected participant:', participant);
+                
+                document.getElementById('studentName').value = participant.name || '';
+                document.getElementById('studentEmail').value = participant.email || '';
+                document.getElementById('rollNumber').value = participant.roll_number || participant.rollNumber || '';
+                document.getElementById('department').value = participant.department || '';
+            }
+        }
+        
+        // ============================================
+        // LOAD ATTENDANCE RECORDS
+        // ============================================
+        async function loadAttendanceRecords() {
+            try {
+                console.log('📡 Loading attendance records...');
+                
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/attendance`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('✅ Attendance data received:', data);
+                
+                // Handle both response formats
+                allAttendanceRecords = data.records || data || [];
+                
+                console.log(`✅ Loaded ${allAttendanceRecords.length} attendance records`);
+                
+                displayAttendanceRecords(allAttendanceRecords);
+                
+            } catch (error) {
+                console.error('❌ Error loading attendance records:', error);
+                document.getElementById('attendanceList').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> Failed to load attendance records.
+                        <br><small>Error: ${error.message}</small>
+                    </div>
+                `;
+            }
+        }
+        
+        // ============================================
+        // DISPLAY ATTENDANCE RECORDS
+        // ============================================
+        function displayAttendanceRecords(records) {
+            const attendanceList = document.getElementById('attendanceList');
+            
+            if (!records || records.length === 0) {
+                attendanceList.innerHTML = `
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle"></i> No attendance records found.
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Email</th>
+                                <th>Roll Number</th>
+                                <th>Event</th>
+                                <th>Check-in Time</th>
+                                <th>Method</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            records.forEach(record => {
+                html += `
+                    <tr>
+                        <td><strong>${record.studentName || record.student_name || '-'}</strong></td>
+                        <td>${record.studentEmail || record.student_email || '-'}</td>
+                        <td>${record.rollNumber || record.roll_number || '-'}</td>
+                        <td>${record.eventName || record.event_name || 'Event #' + (record.eventId || record.event_id)}</td>
+                        <td>${formatDateTime(record.checkInTime || record.check_in_time)}</td>
+                        <td><span class="badge bg-info">${record.checkInMethod || record.check_in_method || 'MANUAL'}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-danger" onclick="deleteAttendance(${record.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted">Total Records: <strong>${records.length}</strong></p>
+            `;
+            
+            attendanceList.innerHTML = html;
+        }
+        
+        // ============================================
+        // MARK MANUAL ATTENDANCE
+        // ============================================
+        async function markManualAttendance() {
+            const eventId = document.getElementById('eventSelect').value;
+            const studentName = document.getElementById('studentName').value.trim();
+            const studentEmail = document.getElementById('studentEmail').value.trim();
+            const rollNumber = document.getElementById('rollNumber').value.trim();
+            const department = document.getElementById('department').value.trim();
+            
+            if (!eventId || !studentName || !studentEmail) {
+                alert('❌ Please select an event and participant');
+                return;
+            }
+            
+            try {
+                console.log('📥 Marking attendance manually...');
+                
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/attendance/mark`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        eventId: eventId,
+                        studentName: studentName,
+                        studentEmail: studentEmail,
+                        rollNumber: rollNumber,
+                        department: department,
+                        checkInMethod: 'MANUAL'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success || response.ok) {
+                    alert('✅ Attendance marked successfully!');
+                    
+                    // Reset form
+                    document.getElementById('participantSelect').value = '';
+                    document.getElementById('studentName').value = '';
+                    document.getElementById('studentEmail').value = '';
+                    document.getElementById('rollNumber').value = '';
+                    document.getElementById('department').value = '';
+                    
+                    // Reload records
+                    loadAttendanceRecords();
+                } else {
+                    alert('❌ ' + (result.message || 'Failed to mark attendance'));
+                }
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                alert('❌ Error marking attendance: ' + error.message);
+            }
+        }
+        
+        // ============================================
+        // FILTER ATTENDANCE
+        // ============================================
+        function filterAttendance() {
+            const eventId = document.getElementById('filterEventSelect').value;
+            const searchText = document.getElementById('searchAttendance').value.toLowerCase();
+            
+            let filtered = allAttendanceRecords;
+            
+            // Filter by event
+            if (eventId) {
+                filtered = filtered.filter(record => 
+                    (record.eventId && record.eventId.toString() === eventId) || 
+                    (record.event_id && record.event_id.toString() === eventId)
+                );
+            }
+            
+            // Filter by search text
+            if (searchText) {
+                filtered = filtered.filter(record => {
+                    const name = (record.studentName || record.student_name || '').toLowerCase();
+                    const email = (record.studentEmail || record.student_email || '').toLowerCase();
+                    return name.includes(searchText) || email.includes(searchText);
+                });
+            }
+            
+            displayAttendanceRecords(filtered);
+        }
+        
+        // ============================================
+        // DELETE ATTENDANCE
+        // ============================================
+        async function deleteAttendance(attendanceId) {
+            if (!confirm('Are you sure you want to delete this attendance record?')) {
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/attendance/${attendanceId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    alert('✅ Attendance record deleted successfully');
+                    loadAttendanceRecords();
+                } else {
+                    alert('❌ Failed to delete attendance record');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                alert('❌ Error deleting attendance record');
+            }
+        }
+        
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+        
+        function formatDateTime(dateTimeString) {
+            if (!dateTimeString) return '-';
+            const date = new Date(dateTimeString);
+            return date.toLocaleString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+        
+        function showError(message) {
+            document.getElementById('attendanceList').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> ${message}
+                </div>
+            `;
+        }
+        
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userRole');
+            window.location.href = '../login.html';
+        }
+    </script>
+</body>
+</html>
+ 

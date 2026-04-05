@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment History - Event Management</title>
+    
+    <!-- Auth Check -->
+    <script>
+        (function() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('⚠️ Please login to access this page');
+                window.location.href = '../login.html';
+            }
+        })();
+    </script>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-2 d-md-block bg-primary sidebar">
+                <div class="position-sticky pt-3">
+                    <h4 class="text-white text-center mb-4">
+                        <i class="fas fa-calendar-alt"></i> Event Management
+                    </h4>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="dashboard.html">
+                                <i class="fas fa-home"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="events.html">
+                                <i class="fas fa-calendar"></i> Events
+                            </a>
+                        </li>
+                        <li class="nav-item" id="myEventsLink" style="display: none;">
+                            <a class="nav-link text-white" href="my-events.html">
+                                <i class="fas fa-star"></i> My Events
+                            </a>
+                        </li>
+                        <li class="nav-item" id="paymentsLink" style="display: none;">
+                            <a class="nav-link text-white active" href="payments.html">
+                                <i class="fas fa-credit-card"></i> Payments
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="clubs.html">
+                                <i class="fas fa-users"></i> Clubs
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="calendar.html">
+                                <i class="fas fa-calendar-alt"></i> Calendar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="attendance.html">
+                                <i class="fas fa-user-check"></i> Attendance
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="reports.html">
+                                <i class="fas fa-chart-bar"></i> Reports
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="col-md-10 ms-sm-auto px-md-4" style="background-color: #f8f9fa; min-height: 100vh;">
+                <!-- Header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <div>
+                        <h1 class="h2">Payment History</h1>
+                        <p class="text-muted">View and manage your event payments</p>
+                    </div>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <span class="navbar-text text-dark me-3">
+                            <i class="fas fa-user"></i> Loading...
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Payment Summary Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card text-white bg-success">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-check-circle"></i> Total Paid
+                                </h5>
+                                <h2 class="mb-0" id="totalPaid">₹0</h2>
+                                <small>Completed Payments</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-white bg-warning">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-clock"></i> Pending
+                                </h5>
+                                <h2 class="mb-0" id="totalPending">₹0</h2>
+                                <small>Awaiting Payment</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-white bg-info">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-calendar-check"></i> This Month
+                                </h5>
+                                <h2 class="mb-0" id="thisMonthPaid">₹0</h2>
+                                <small>Payments This Month</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment History Table -->
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-receipt"></i> Payment History</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="paymentHistoryList">
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/payments.js"></script>
+</body>
+</html>

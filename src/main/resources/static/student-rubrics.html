@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Rubrics Scores - Student Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar-custom {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .score-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            animation: slideUp 0.5s ease;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .rank-display {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            color: white;
+            margin-bottom: 2rem;
+        }
+        
+        .rank-number {
+            font-size: 5rem;
+            font-weight: 900;
+            margin: 1rem 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .rank-1 .rank-number { color: #ffd700; }
+        .rank-2 .rank-number { color: #c0c0c0; }
+        .rank-3 .rank-number { color: #cd7f32; }
+        
+        .medal-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-box {
+            text-align: center;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .criterion-bar {
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 40px;
+            margin: 1rem 0;
+            position: relative;
+        }
+        
+        .criterion-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            transition: width 1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 1rem;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .criterion-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #495057;
+        }
+        
+        .comment-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+        }
+        
+        .judge-name {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+        
+        .btn-certificate {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #000;
+            font-weight: 700;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-certificate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .percentile-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: #10b981;
+            color: white;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light navbar-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="pages/events.html">
+                <i class="fas fa-trophy"></i> My Rubrics Scores
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="pages/events.html">
+                            <i class="fas fa-calendar"></i> My Events
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="live-scoreboard.html">
+                            <i class="fas fa-chart-bar"></i> Leaderboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-link" id="userInfo">
+                            <i class="fas fa-user"></i> <span id="userName">Loading...</span>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <!-- Event Selection -->
+        <div class="score-card">
+            <h2 class="mb-4">
+                <i class="fas fa-bullseye text-primary"></i> Select Event to View Scores
+            </h2>
+            <div class="row">
+                <div class="col-md-8">
+                    <select class="form-select form-select-lg" id="eventSelect" onchange="loadMyScores()">
+                        <option value="">-- Select an Event --</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary btn-lg w-100" onclick="loadMyScores()">
+                        <i class="fas fa-sync"></i> Refresh Scores
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="score-card text-center" style="display: none;">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Loading your scores...</p>
+        </div>
+
+        <!-- No Scores State -->
+        <div id="noScoresState" class="score-card empty-state" style="display: none;">
+            <i class="fas fa-clipboard-list"></i>
+            <h3>No Scores Available Yet</h3>
+            <p>Scores will appear here once judges complete the evaluation for this event.</p>
+            <a href="live-scoreboard.html" class="btn btn-outline-primary mt-3">
+                <i class="fas fa-chart-bar"></i> View Public Scoreboard
+            </a>
+        </div>
+
+        <!-- Scores Display -->
+        <div id="scoresContent" style="display: none;">
+            <!-- Rank Display -->
+            <div class="rank-display" id="rankDisplay">
+                <div class="medal-icon" id="medalIcon">🏅</div>
+                <div class="rank-number" id="rankNumber">-</div>
+                <h3>Your Rank</h3>
+                <p class="mb-0">out of <span id="totalParticipants">0</span> participants</p>
+                <div class="percentile-badge" id="percentileBadge">Top 0%</div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="stat-box">
+                        <div class="stat-value" id="totalScore">0</div>
+                        <div class="stat-label">Total Score</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-box">
+                        <div class="stat-value" id="weightedScore">0</div>
+                        <div class="stat-label">Weighted Score</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-box">
+                        <div class="stat-value" id="averageScore">0</div>
+                        <div class="stat-label">Average Score</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Criteria Breakdown -->
+            <div class="score-card">
+                <h4 class="mb-4">
+                    <i class="fas fa-chart-pie text-primary"></i> Performance Breakdown
+                </h4>
+                <div id="criteriaBreakdown"></div>
+            </div>
+
+            <!-- Judge Comments -->
+            <div class="score-card" id="commentsSection" style="display: none;">
+                <h4 class="mb-4">
+                    <i class="fas fa-comments text-primary"></i> Judge Feedback
+                </h4>
+                <div id="judgeComments"></div>
+            </div>
+
+            <!-- Actions -->
+            <div class="score-card text-center">
+                <h4 class="mb-4">Actions</h4>
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <a href="live-scoreboard.html" class="btn btn-primary btn-lg">
+                        <i class="fas fa-trophy"></i> View Full Leaderboard
+                    </a>
+                    <button class="btn btn-certificate btn-lg" id="certificateBtn" style="display: none;" onclick="downloadCertificate()">
+                        <i class="fas fa-certificate"></i> Download Certificate
+                    </button>
+                    <button class="btn btn-outline-secondary btn-lg" onclick="shareResults()">
+                        <i class="fas fa-share-alt"></i> Share Results
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_URL = 'http://localhost:8080/api';
+        let currentEventId = null;
+        let currentRubricId = null;
+        let myParticipantId = null;
+
+        // Auth check and user info
+        window.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('⚠️ Please login to view your scores');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const userName = localStorage.getItem('fullName') || 'Student';
+            document.getElementById('userName').textContent = userName;
+
+            await loadEvents();
+        });
+
+        function getAuthHeaders() {
+            const token = localStorage.getItem('token');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': token ? `Bearer ${token}` : ''
+            };
+        }
+
+        async function loadEvents() {
+            try {
+                const response = await fetch(`${API_URL}/events`, {
+                    headers: getAuthHeaders()
+                });
+
+                if (!response.ok) throw new Error('Failed to load events');
+
+                const events = await response.json();
+                const select = document.getElementById('eventSelect');
+                
+                select.innerHTML = '<option value="">-- Select an Event --</option>';
+                
+                if (Array.isArray(events) && events.length > 0) {
+                    // Only show APPROVED events
+                    const approvedEvents = events.filter(e => e.status === 'APPROVED');
+                    
+                    approvedEvents.forEach(event => {
+                        const option = document.createElement('option');
+                        option.value = event.id;
+                        const dateStr = event.eventDate ? 
+                            new Date(event.eventDate).toLocaleDateString('en-US', { 
+                                year: 'numeric', month: 'short', day: 'numeric' 
+                            }) : '';
+                        option.textContent = `${event.title}${dateStr ? ' - ' + dateStr : ''}`;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading events:', error);
+                showAlert('Failed to load events', 'danger');
+            }
+        }
+
+        async function loadMyScores() {
+            const eventId = document.getElementById('eventSelect').value;
+            if (!eventId) {
+                showAlert('Please select an event', 'warning');
+                return;
+            }
+
+            currentEventId = eventId;
+            
+            // Show loading
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('noScoresState').style.display = 'none';
+            document.getElementById('scoresContent').style.display = 'none';
+
+            try {
+                const studentEmail = localStorage.getItem('email');
+                
+                // Step 1: Get rubrics for this event
+                const rubricsRes = await fetch(`${API_URL}/events/${eventId}/rubrics`, {
+                    headers: getAuthHeaders()
+                });
+                const rubricsData = await rubricsRes.json();
+                
+                if (!rubricsData.success || !rubricsData.rubrics || rubricsData.rubrics.length === 0) {
+                    showNoScores('No evaluation rubric found for this event');
+                    return;
+                }
+                
+                // Use the first rubric
+                currentRubricId = rubricsData.rubrics[0].id;
+                
+                // Step 2: Get participants for this event
+                const participantsRes = await fetch(`${API_URL}/events/${eventId}/participants`, {
+                    headers: getAuthHeaders()
+                });
+                const participantsData = await participantsRes.json();
+                
+                if (!participantsData.success) {
+                    showNoScores('Unable to load participants');
+                    return;
+                }
+                
+                // Find my participant record
+                const myParticipant = participantsData.participants.find(p => 
+                    p.email === studentEmail
+                );
+                
+                if (!myParticipant) {
+                    showNoScores('You are not registered as a participant for this event');
+                    return;
+                }
+                
+                myParticipantId = myParticipant.id;
+                
+                // Step 3: Get scoreboard
+                const scoreboardRes = await fetch(`${API_URL}/events/${eventId}/rubrics/${currentRubricId}/scoreboard`, {
+                    headers: getAuthHeaders()
+                });
+                const scoreboardData = await scoreboardRes.json();
+                
+                if (!scoreboardData.success) {
+                    showNoScores('Scoreboard not available yet');
+                    return;
+                }
+                
+                // Find my score
+                const myScore = scoreboardData.scoreboard.find(s => 
+                    s.participant_id === myParticipantId
+                );
+                
+                if (!myScore) {
+                    showNoScores('Scores not available yet. Judges are still evaluating.');
+                    return;
+                }
+                
+                // Display scores
+                displayScores(myScore, scoreboardData.scoreboard.length);
+                
+            } catch (error) {
+                console.error('Error loading scores:', error);
+                showNoScores('Error loading scores. Please try again.');
+            }
+        }
+
+        function displayScores(myScore, totalParticipants) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('scoresContent').style.display = 'block';
+            
+            // Rank display
+            const rank = myScore.rank;
+            const rankDisplay = document.getElementById('rankDisplay');
+            const medalIcon = document.getElementById('medalIcon');
+            const rankNumber = document.getElementById('rankNumber');
+            
+            rankNumber.textContent = '#' + rank;
+            rankNumber.className = 'rank-number';
+            
+            if (rank === 1) {
+                rankNumber.classList.add('rank-1');
+                medalIcon.textContent = '🥇';
+                rankDisplay.style.background = 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)';
+            } else if (rank === 2) {
+                rankNumber.classList.add('rank-2');
+                medalIcon.textContent = '🥈';
+                rankDisplay.style.background = 'linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%)';
+            } else if (rank === 3) {
+                rankNumber.classList.add('rank-3');
+                medalIcon.textContent = '🥉';
+                rankDisplay.style.background = 'linear-gradient(135deg, #cd7f32 0%, #ff9c5d 100%)';
+            }
+            
+            document.getElementById('totalParticipants').textContent = totalParticipants;
+            
+            // Percentile
+            const percentile = ((totalParticipants - rank + 1) / totalParticipants * 100).toFixed(0);
+            document.getElementById('percentileBadge').textContent = `Top ${100 - percentile}%`;
+            
+            // Scores
+            document.getElementById('totalScore').textContent = parseFloat(myScore.total_score).toFixed(2);
+            document.getElementById('weightedScore').textContent = parseFloat(myScore.weighted_score).toFixed(2);
+            document.getElementById('averageScore').textContent = parseFloat(myScore.average_score).toFixed(2);
+            
+            // Criteria breakdown
+            const breakdownDiv = document.getElementById('criteriaBreakdown');
+            breakdownDiv.innerHTML = '';
+            
+            if (myScore.criteria_scores && myScore.criteria_scores.length > 0) {
+                myScore.criteria_scores.forEach(c => {
+                    const percentage = (parseFloat(c.avg_score) / parseFloat(c.max_score) * 100).toFixed(0);
+                    
+                    const criterionHtml = `
+                        <div class="mb-4">
+                            <div class="criterion-name">
+                                ${c.criterion_name}
+                                <span class="float-end">
+                                    <strong>${parseFloat(c.avg_score).toFixed(1)}</strong> / ${c.max_score}
+                                </span>
+                            </div>
+                            <div class="criterion-bar">
+                                <div class="criterion-fill" style="width: ${percentage}%">
+                                    ${percentage}%
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    breakdownDiv.insertAdjacentHTML('beforeend', criterionHtml);
+                });
+            }
+            
+            // Certificate button (only for top 3)
+            if (rank <= 3) {
+                document.getElementById('certificateBtn').style.display = 'inline-block';
+            }
+        }
+
+        function showNoScores(message) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('scoresContent').style.display = 'none';
+            const noScoresDiv = document.getElementById('noScoresState');
+            noScoresDiv.style.display = 'block';
+            noScoresDiv.querySelector('p').textContent = message;
+        }
+
+        async function downloadCertificate() {
+            if (!currentEventId) return;
+            
+            const participantName = localStorage.getItem('fullName');
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(
+                    `${API_URL}/certificate/generate/${currentEventId}?participantName=${encodeURIComponent(participantName)}`,
+                    {
+                        headers: {
+                            'Authorization': token ? `Bearer ${token}` : ''
+                        }
+                    }
+                );
+
+                if (!response.ok) throw new Error('Failed to generate certificate');
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `certificate-${participantName.replace(/\s+/g, '_')}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                showAlert('Certificate downloaded successfully! 🎓', 'success');
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Failed to download certificate', 'danger');
+            }
+        }
+
+        function shareResults() {
+            const rankNumber = document.getElementById('rankNumber').textContent;
+            const totalScore = document.getElementById('weightedScore').textContent;
+            const eventSelect = document.getElementById('eventSelect');
+            const eventName = eventSelect.options[eventSelect.selectedIndex].text;
+            
+            const shareText = `🎯 I ranked ${rankNumber} in "${eventName}" with a score of ${totalScore}!`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'My Event Score',
+                    text: shareText
+                });
+            } else {
+                navigator.clipboard.writeText(shareText);
+                showAlert('Results copied to clipboard!', 'success');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+            alertDiv.style.zIndex = '9999';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            setTimeout(() => alertDiv.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
